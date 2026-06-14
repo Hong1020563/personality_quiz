@@ -1,51 +1,41 @@
 import streamlit as st
 import math
 
-st.title("元素坐标匹配器（三维维度版）")
+st.title("元素人格自动匹配器")
 
-# 三个维度滑块：行动力、冷静度、冒险度
-fire_score = st.slider("行动力", 0, 10, 5)
-water_score = st.slider("冷静度", 0, 10, 5)
-risk_score = st.slider("冒险度", 0, 10, 5)
+# 1. 获取用户坐标（二维分数）
+fire_score = st.slider("火属性（行动力）", 0, 10, 5)
+water_score = st.slider("水属性（冷静度）", 0, 10, 5)
+user = [fire_score, water_score]
 
-# 三维用户坐标 [x, y, z]
-user = [fire_score, water_score, risk_score]
+# 2. 定义所有模板（字典：名称-坐标）
+profiles = {
+    "烈焰型": [10, 4],
+    "潮汐型": [4, 10],
+    "疾风型": [7, 7]
+}
 
-# 三维模板坐标
-fire_type = [10, 4, 9]
-water_type = [4, 10, 3]
-wind_type = [7, 7, 6]
+# 3. 擂台变量初始化（必须写在循环外）
+min_dist = 999999.0
+best_match = ""
 
-if st.button("开始匹配"):
-    # 三维距离计算
-    d_fire = math.sqrt(
-        (user[0] - fire_type[0])**2 +
-        (user[1] - fire_type[1])**2 +
-        (user[2] - fire_type[2])**2
-    )
-    d_water = math.sqrt(
-        (user[0] - water_type[0])**2 +
-        (user[1] - water_type[1])**2 +
-        (user[2] - water_type[2])**2
-    )
-    d_wind = math.sqrt(
-        (user[0] - wind_type[0])**2 +
-        (user[1] - wind_type[1])**2 +
-        (user[2] - wind_type[2])**2
-    )
+if st.button("自动匹配"):
+    # 4. 循环遍历所有模板
+    for name, coords in profiles.items():
+        # 计算两点距离
+        dist = math.sqrt(
+            (user[0] - coords[0]) ** 2 +
+            (user[1] - coords[1]) ** 2
+        )
+        # 展示每一个模板的距离
+        st.write(f"{name} 距离：{dist:.2f}")
+        
+        # 5. 打擂台：更新最小值和最优匹配
+        if dist < min_dist:
+            min_dist = dist
+            best_match = name
 
-    # 输出距离
-    st.write(f"距离烈焰型：{d_fire:.2f}")
-    st.write(f"距离潮汐型：{d_water:.2f}")
-    st.write(f"距离疾风型：{d_wind:.2f}")
-
-    # 匹配判断
-    min_dist = min(d_fire, d_water, d_wind)
-    if min_dist == d_fire:
-        st.success("匹配结果：你更接近【烈焰型】")
-    elif min_dist == d_water:
-        st.success("匹配结果：你更接近【潮汐型】")
-    else:
-        st.success("匹配结果：你更接近【疾风型】")
-
+    # 6. 输出最终结果
+    st.divider()
+    st.success(f"最终匹配结果：{best_match}")
     st.balloons()
