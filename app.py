@@ -1,12 +1,13 @@
 import streamlit as st
 import time
+import pandas as pd  # 导入pandas，用于绘制分数柱状图
 
 # 页面全局配置
 st.set_page_config(
     page_title="赛博炼金术士 · 元素人格测试仪",
     page_icon="🔮",
     layout="centered",
-    initial_sidebar_state="collapsed"  # 额外优化：折叠侧边栏，界面更整洁
+    initial_sidebar_state="collapsed"  # 折叠侧边栏，界面更整洁
 )
 
 # 初始化会话状态（控制逐题显示、分数）
@@ -57,7 +58,7 @@ if q_num <= total_q:
     st.progress(progress, text=f"答题进度：第{q_num}题 / 共{total_q}题")
 st.divider()
 
-# ========== 题目1（无 上一题 按钮） ==========
+# ========== 题目1（无 上一题 按钮 + 题目提示） ==========
 if q_num == 1:
     ans1 = st.radio(
         "问题1：遇到突发危机，你第一反应是？",
@@ -65,6 +66,7 @@ if q_num == 1:
          "灵活周旋，快速脱身", "坚守原地，守护同伴"],
         index=None  # 默认不选中，强制答题
     )
+    st.info("小提示：这道题测试你面对危机的本能反应")
 
     if st.button("下一题"):
         if not ans1:
@@ -81,7 +83,7 @@ if q_num == 1:
             st.session_state.current_q = 2
             st.rerun()
 
-# ========== 题目2（添加上一题 + 答题校验） ==========
+# ========== 题目2（添加上一题 + 答题校验 + 题目提示） ==========
 elif q_num == 2:
     ans2 = st.radio(
         "问题2：日常处事风格更偏向？",
@@ -89,6 +91,7 @@ elif q_num == 2:
          "随性自由，不喜束缚", "稳重踏实，信守承诺"],
         index=None
     )
+    st.info("小提示：这道题测试你日常的性格与行事风格")
 
     # 双按钮：上一题 / 下一题
     col_left, col_right = st.columns(2)
@@ -112,7 +115,7 @@ elif q_num == 2:
                 st.session_state.current_q = 3
                 st.rerun()
 
-# ========== 题目3（添加上一题 + 答题校验） ==========
+# ========== 题目3（添加上一题 + 答题校验 + 题目提示） ==========
 elif q_num == 3:
     ans3 = st.radio(
         "问题3：团队中你更愿意扮演？",
@@ -120,6 +123,7 @@ elif q_num == 3:
          "活跃的协调者", "可靠的支撑者"],
         index=None
     )
+    st.info("小提示：这道题测试你在团队里的角色定位")
 
     col_left, col_right = st.columns(2)
     with col_left:
@@ -142,7 +146,7 @@ elif q_num == 3:
                 st.session_state.current_q = 4
                 st.rerun()
 
-# ========== 题目4（添加上一题 + 答题校验） ==========
+# ========== 题目4（添加上一题 + 答题校验 + 题目提示） ==========
 elif q_num == 4:
     ans4 = st.radio(
         "问题4：更喜欢的环境氛围？",
@@ -150,6 +154,7 @@ elif q_num == 4:
          "开阔自由", "安稳踏实"],
         index=None
     )
+    st.info("小提示：环境偏好也能反映你的内在性格特质")
 
     col_left, col_right = st.columns(2)
     with col_left:
@@ -169,10 +174,10 @@ elif q_num == 4:
                     st.session_state.score_wind += 1
                 else:
                     st.session_state.score_earth += 1
-                st.session_state.current_q = 5
-                st.rerun()
+            st.session_state.current_q = 5
+            st.rerun()
 
-# ========== 题目5 滑块（添加上一题 + 答题校验） ==========
+# ========== 题目5 滑块（添加上一题 + 题目提示） ==========
 elif q_num == 5:
     ans5 = st.slider(
         "问题5：你的耐心程度偏向哪一端？",
@@ -180,6 +185,7 @@ elif q_num == 5:
         help="1=缺乏耐心、行动优先 | 4=极具耐心、沉稳优先"
     )
     st.caption("1：急躁好动 | 2：中等耐心 | 3：比较耐心 | 4：极度沉稳")
+    st.info("小提示：耐心程度对应不同元素的性格特征")
 
     col_left, col_right = st.columns(2)
     with col_left:
@@ -200,12 +206,13 @@ elif q_num == 5:
             st.session_state.current_q = 6
             st.rerun()
 
-# ========== 题目6 多选（添加上一题 + 答题校验） ==========
+# ========== 题目6 多选（添加上一题 + 答题校验 + 题目提示） ==========
 elif q_num == 6:
     ans6 = st.multiselect(
         "问题6：你偏爱哪些特质？（可多选）",
         ["勇敢果敢", "温柔内敛", "洒脱自在", "踏实可靠"]
     )
+    st.info("小提示：可以多选，选择你最认可的个人特质")
 
     col_left, col_right = st.columns(2)
     with col_left:
@@ -228,7 +235,7 @@ elif q_num == 6:
                 st.session_state.current_q = 7
                 st.rerun()
 
-# ========== 最终结果页 ==========
+# ========== 最终结果页（分数图表 + 平局判断） ==========
 elif q_num == 7:
     st.divider()
     st.subheader("你的元素得分明细")
@@ -237,15 +244,37 @@ elif q_num == 7:
     st.write(f"风元素得分：{st.session_state.score_wind} 分")
     st.write(f"土元素得分：{st.session_state.score_earth} 分")
 
+    # 1. 分数可视化：柱状图
+    st.subheader("分数可视化图表")
+    score_data = {
+        "元素": ["火", "水", "风", "土"],
+        "分数": [
+            st.session_state.score_fire,
+            st.session_state.score_water,
+            st.session_state.score_wind,
+            st.session_state.score_earth
+        ]
+    }
+    df = pd.DataFrame(score_data)
+    st.bar_chart(df, x="元素", y="分数", use_container_width=True)
+
     st.divider()
-    # 判定最终元素
+
+    # 2. 平局判断逻辑
     all_score = {
         "火": st.session_state.score_fire,
         "水": st.session_state.score_water,
         "风": st.session_state.score_wind,
         "土": st.session_state.score_earth
     }
-    final_choice = max(all_score, key=all_score.get)
+    max_score = max(all_score.values())
+    tie_list = [k for k, v in all_score.items() if v == max_score]
+
+    if len(tie_list) > 1:
+        st.info(f"出现平局！你同时契合：{'、'.join(tie_list)} 多种元素特质")
+        final_choice = tie_list[0]
+    else:
+        final_choice = max(all_score, key=all_score.get)
 
     # 元素资料
     element_info = {
