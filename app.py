@@ -5,14 +5,14 @@ import time
 st.set_page_config(
     page_title="赛博炼金术士 · 元素人格测试仪",
     page_icon="🔮",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"  # 额外优化：折叠侧边栏，界面更整洁
 )
 
-# 初始化会话状态（控制逐题显示）
+# 初始化会话状态（控制逐题显示、分数）
 if "current_q" not in st.session_state:
     st.session_state.current_q = 1
 
-# 初始化分数
 if "score_fire" not in st.session_state:
     st.session_state.score_fire = 0
 if "score_water" not in st.session_state:
@@ -37,115 +37,198 @@ with st.expander("四大元素档案（点击查看）"):
     """)
 st.divider()
 
-# 基础信息
+# 1. 基础信息 + 代号非空校验
 name = st.text_input("你的代号是？", placeholder="比如：炼金学徒小A")
 st.divider()
 
+# 代号校验：未填写则禁止答题
+if not name:
+    st.info("请先填写你的代号，再开始答题")
+    st.stop()
+
+# 答题区域
 st.subheader("炼金试炼问卷")
 q_num = st.session_state.current_q
+total_q = 6  # 总题目数
 
-# 题目1
+# 进度条（全局展示答题进度）
+if q_num <= total_q:
+    progress = q_num / total_q
+    st.progress(progress, text=f"答题进度：第{q_num}题 / 共{total_q}题")
+st.divider()
+
+# ========== 题目1（无 上一题 按钮） ==========
 if q_num == 1:
-    ans1 = st.radio("问题1：遇到突发危机，你第一反应是？",
-                   ["主动出手，直面挑战", "冷静观察，伺机行动",
-                    "灵活周旋，快速脱身", "坚守原地，守护同伴"])
-    if st.button("下一题"):
-        if ans1 == "主动出手，直面挑战":
-            st.session_state.score_fire += 1
-        elif ans1 == "冷静观察，伺机行动":
-            st.session_state.score_water += 1
-        elif ans1 == "灵活周旋，快速脱身":
-            st.session_state.score_wind += 1
-        else:
-            st.session_state.score_earth += 1
-        st.session_state.current_q = 2
-        st.rerun()
+    ans1 = st.radio(
+        "问题1：遇到突发危机，你第一反应是？",
+        ["主动出手，直面挑战", "冷静观察，伺机行动",
+         "灵活周旋，快速脱身", "坚守原地，守护同伴"],
+        index=None  # 默认不选中，强制答题
+    )
 
-# 题目2
+    if st.button("下一题"):
+        if not ans1:
+            st.warning("请先选择一个答案再继续！")
+        else:
+            if ans1 == "主动出手，直面挑战":
+                st.session_state.score_fire += 1
+            elif ans1 == "冷静观察，伺机行动":
+                st.session_state.score_water += 1
+            elif ans1 == "灵活周旋，快速脱身":
+                st.session_state.score_wind += 1
+            else:
+                st.session_state.score_earth += 1
+            st.session_state.current_q = 2
+            st.rerun()
+
+# ========== 题目2（添加上一题 + 答题校验） ==========
 elif q_num == 2:
-    ans2 = st.radio("问题2：日常处事风格更偏向？",
-                   ["热情直率，敢想敢做", "心思细腻，共情力强",
-                    "随性自由，不喜束缚", "稳重踏实，信守承诺"])
-    if st.button("下一题"):
-        if ans2 == "热情直率，敢想敢做":
-            st.session_state.score_fire += 1
-        elif ans2 == "心思细腻，共情力强":
-            st.session_state.score_water += 1
-        elif ans2 == "随性自由，不喜束缚":
-            st.session_state.score_wind += 1
-        else:
-            st.session_state.score_earth += 1
-        st.session_state.current_q = 3
-        st.rerun()
+    ans2 = st.radio(
+        "问题2：日常处事风格更偏向？",
+        ["热情直率，敢想敢做", "心思细腻，共情力强",
+         "随性自由，不喜束缚", "稳重踏实，信守承诺"],
+        index=None
+    )
 
-# 题目3
+    # 双按钮：上一题 / 下一题
+    col_left, col_right = st.columns(2)
+    with col_left:
+        if st.button("上一题"):
+            st.session_state.current_q = 1
+            st.rerun()
+    with col_right:
+        if st.button("下一题"):
+            if not ans2:
+                st.warning("请先选择一个答案再继续！")
+            else:
+                if ans2 == "热情直率，敢想敢做":
+                    st.session_state.score_fire += 1
+                elif ans2 == "心思细腻，共情力强":
+                    st.session_state.score_water += 1
+                elif ans2 == "随性自由，不喜束缚":
+                    st.session_state.score_wind += 1
+                else:
+                    st.session_state.score_earth += 1
+                st.session_state.current_q = 3
+                st.rerun()
+
+# ========== 题目3（添加上一题 + 答题校验） ==========
 elif q_num == 3:
-    ans3 = st.radio("问题3：团队中你更愿意扮演？",
-                   ["冲锋的领导者", "幕后的观察者",
-                    "活跃的协调者", "可靠的支撑者"])
-    if st.button("下一题"):
-        if ans3 == "冲锋的领导者":
-            st.session_state.score_fire += 1
-        elif ans3 == "幕后的观察者":
-            st.session_state.score_water += 1
-        elif ans3 == "活跃的协调者":
-            st.session_state.score_wind += 1
-        else:
-            st.session_state.score_earth += 1
-        st.session_state.current_q = 4
-        st.rerun()
+    ans3 = st.radio(
+        "问题3：团队中你更愿意扮演？",
+        ["冲锋的领导者", "幕后的观察者",
+         "活跃的协调者", "可靠的支撑者"],
+        index=None
+    )
 
-# 题目4
+    col_left, col_right = st.columns(2)
+    with col_left:
+        if st.button("上一题"):
+            st.session_state.current_q = 2
+            st.rerun()
+    with col_right:
+        if st.button("下一题"):
+            if not ans3:
+                st.warning("请先选择一个答案再继续！")
+            else:
+                if ans3 == "冲锋的领导者":
+                    st.session_state.score_fire += 1
+                elif ans3 == "幕后的观察者":
+                    st.session_state.score_water += 1
+                elif ans3 == "活跃的协调者":
+                    st.session_state.score_wind += 1
+                else:
+                    st.session_state.score_earth += 1
+                st.session_state.current_q = 4
+                st.rerun()
+
+# ========== 题目4（添加上一题 + 答题校验） ==========
 elif q_num == 4:
-    ans4 = st.radio("问题4：更喜欢的环境氛围？",
-                   ["热闹热烈", "安静温润",
-                    "开阔自由", "安稳踏实"])
-    if st.button("下一题"):
-        if ans4 == "热闹热烈":
-            st.session_state.score_fire += 1
-        elif ans4 == "安静温润":
-            st.session_state.score_water += 1
-        elif ans4 == "开阔自由":
-            st.session_state.score_wind += 1
-        else:
-            st.session_state.score_earth += 1
-        st.session_state.current_q = 5
-        st.rerun()
+    ans4 = st.radio(
+        "问题4：更喜欢的环境氛围？",
+        ["热闹热烈", "安静温润",
+         "开阔自由", "安稳踏实"],
+        index=None
+    )
 
-# 题目5 滑块
+    col_left, col_right = st.columns(2)
+    with col_left:
+        if st.button("上一题"):
+            st.session_state.current_q = 3
+            st.rerun()
+    with col_right:
+        if st.button("下一题"):
+            if not ans4:
+                st.warning("请先选择一个答案再继续！")
+            else:
+                if ans4 == "热闹热烈":
+                    st.session_state.score_fire += 1
+                elif ans4 == "安静温润":
+                    st.session_state.score_water += 1
+                elif ans4 == "开阔自由":
+                    st.session_state.score_wind += 1
+                else:
+                    st.session_state.score_earth += 1
+                st.session_state.current_q = 5
+                st.rerun()
+
+# ========== 题目5 滑块（添加上一题 + 答题校验） ==========
 elif q_num == 5:
-    ans5 = st.slider("问题5：你的耐心程度偏向哪一端？", 1, 4, 2,
-                    help="1=缺乏耐心、行动优先 | 4=极具耐心、沉稳优先")
+    ans5 = st.slider(
+        "问题5：你的耐心程度偏向哪一端？",
+        1, 4, 2,
+        help="1=缺乏耐心、行动优先 | 4=极具耐心、沉稳优先"
+    )
     st.caption("1：急躁好动 | 2：中等耐心 | 3：比较耐心 | 4：极度沉稳")
-    if st.button("下一题"):
-        if ans5 == 1:
-            st.session_state.score_fire += 1
-        elif ans5 == 2:
-            st.session_state.score_wind += 1
-        elif ans5 == 3:
-            st.session_state.score_water += 1
-        else:
-            st.session_state.score_earth += 1
-        st.session_state.current_q = 6
-        st.rerun()
 
-# 题目6 多选
+    col_left, col_right = st.columns(2)
+    with col_left:
+        if st.button("上一题"):
+            st.session_state.current_q = 4
+            st.rerun()
+    with col_right:
+        if st.button("下一题"):
+            # 滑块默认有选中值，无需判空，直接计分
+            if ans5 == 1:
+                st.session_state.score_fire += 1
+            elif ans5 == 2:
+                st.session_state.score_wind += 1
+            elif ans5 == 3:
+                st.session_state.score_water += 1
+            else:
+                st.session_state.score_earth += 1
+            st.session_state.current_q = 6
+            st.rerun()
+
+# ========== 题目6 多选（添加上一题 + 答题校验） ==========
 elif q_num == 6:
-    ans6 = st.multiselect("问题6：你偏爱哪些特质？（可多选）",
-                          ["勇敢果敢", "温柔内敛", "洒脱自在", "踏实可靠"])
-    if st.button("查看结果"):
-        if "勇敢果敢" in ans6:
-            st.session_state.score_fire += 1
-        if "温柔内敛" in ans6:
-            st.session_state.score_water += 1
-        if "洒脱自在" in ans6:
-            st.session_state.score_wind += 1
-        if "踏实可靠" in ans6:
-            st.session_state.score_earth += 1
-        st.session_state.current_q = 7
-        st.rerun()
+    ans6 = st.multiselect(
+        "问题6：你偏爱哪些特质？（可多选）",
+        ["勇敢果敢", "温柔内敛", "洒脱自在", "踏实可靠"]
+    )
 
-# 最终结果页
+    col_left, col_right = st.columns(2)
+    with col_left:
+        if st.button("上一题"):
+            st.session_state.current_q = 5
+            st.rerun()
+    with col_right:
+        if st.button("查看结果"):
+            if not ans6:
+                st.warning("请至少选择一项特质再继续！")
+            else:
+                if "勇敢果敢" in ans6:
+                    st.session_state.score_fire += 1
+                if "温柔内敛" in ans6:
+                    st.session_state.score_water += 1
+                if "洒脱自在" in ans6:
+                    st.session_state.score_wind += 1
+                if "踏实可靠" in ans6:
+                    st.session_state.score_earth += 1
+                st.session_state.current_q = 7
+                st.rerun()
+
+# ========== 最终结果页 ==========
 elif q_num == 7:
     st.divider()
     st.subheader("你的元素得分明细")
@@ -195,8 +278,8 @@ elif q_num == 7:
     st.markdown(f"""
     <div style="text-align: center; padding: 1.5rem; border-radius: 12px; background-color: {res_color}20;">
         <h2 style="color: {res_color};">{res_name}</h2>
-        <p style="font-size: 1.1rem;">{name}，你的本命元素为【{final_choice}】</p >
-        <p style="font-style: italic; color: #555; font-size: 1rem;">{res_desc}</p >
+        <p style="font-size: 1.1rem;">{name}，你的本命元素为【{final_choice}】</p>
+        <p style="font-style: italic; color: #555; font-size: 1rem;">{res_desc}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -204,7 +287,6 @@ elif q_num == 7:
 
     # 重新测试按钮
     if st.button("重新测试"):
-        # 清空所有状态，回到第一题
         st.session_state.current_q = 1
         st.session_state.score_fire = 0
         st.session_state.score_water = 0
