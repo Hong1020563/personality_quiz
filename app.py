@@ -1,16 +1,20 @@
 import streamlit as st
 
-# 页面标题与说明
-st.title("赛博炼金术士：元素人格探测器")
-st.caption("回答问题，匹配专属元素属性")
+# 数据层：统一管理所有内容（不写死在组件里）
+profiles = {
+    "火": {"title":"烈焰炼金术士", "desc":"行动迅速，爆发力强"},
+    "水": {"title":"潮汐观察者", "desc":"心思细腻，适应力好"},
+    "风": {"title":"疾风游侠", "desc":"思维活跃，行事灵活"},
+    "土": {"title":"大地守卫者", "desc":"沉稳可靠，抗压能力强"}
+}
 
-# 1. 收集用户信息
+# 页面交互层
+st.title("元素人格探测器")
 name = st.text_input("请输入你的代号：")
-ans1 = st.radio("1. 发现发光的门，你会？", ["立刻推开", "先观察四周", "找人一起"])
-ans2 = st.selectbox("2. 偏好哪种施法媒介？", ["法杖", "水晶球", "符文卷轴", "空手"])
+# 提取字典的键作为下拉选项
+element = st.selectbox("选择你的元素", list(profiles.keys()))
 
-# 2. 点击按钮触发结果
+# 点击按钮展示查询结果
 if st.button("开始匹配"):
-    st.divider()  # 分割线
-    st.success(f"{name}，你的元素特质已匹配完成！")
-    st.balloons()
+    st.success(f"{name}，你的专属身份：{profiles[element]['title']}")
+    st.write("性格描述：", profiles[element]["desc"])
