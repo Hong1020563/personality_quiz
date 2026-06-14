@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
+import random
 
 # ===================== 全局配置（隐藏侧边栏） =====================
 st.set_page_config(
@@ -10,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ===================== 架构优化：统一全局文案 & 题库 & 彩蛋文案 =====================
+# ===================== 全局常量 & 文案 & 题库 =====================
 # 元素档案文案
 ELEMENT_INTRO = """
 - **火元素**：代表勇气、热情、行动力，天生的开拓者与领导者。
@@ -19,7 +20,7 @@ ELEMENT_INTRO = """
 - **土元素**：代表稳重、坚守、责任感，团队中可靠的守护者。
 """
 
-# 元素对应资料：名称、描述、配色、专属彩蛋文案（每个元素独立彩蛋）
+# 元素对应资料：名称、描述、配色、专属彩蛋文案
 ELEMENT_INFO = {
     "火": {
         "name": "烈焰炼金术士",
@@ -63,7 +64,7 @@ ELEMENT_INFO = {
     }
 }
 
-# 题库：统一存放所有题目、选项、提示（新增题目直接在这里追加）
+# 题库
 QUESTION_LIST = [
     {
         "title": "问题1：遇到突发危机，你第一反应是？",
@@ -104,7 +105,7 @@ QUESTION_LIST = [
 ]
 TOTAL_QUESTION = 6
 
-# ===================== 架构优化：封装计分函数 =====================
+# ===================== 封装计分函数 =====================
 def calc_radio_score(answer):
     """单选题目计分"""
     if answer in ("主动出手，直面挑战", "热情直率，敢想敢做", "冲锋的领导者", "热闹热烈"):
@@ -138,7 +139,7 @@ def calc_multiselect_score(answer_list):
     if "踏实可靠" in answer_list:
         st.session_state.score_earth += 1
 
-# ===================== 初始化会话状态（新增计时相关） =====================
+# ===================== 初始化会话状态（新增：答案缓存、计时） =====================
 if "current_q" not in st.session_state:
     st.session_state.current_q = 1
 if "score_fire" not in st.session_state:
@@ -149,9 +150,12 @@ if "score_wind" not in st.session_state:
     st.session_state.score_wind = 0
 if "score_earth" not in st.session_state:
     st.session_state.score_earth = 0
-# 答题计时：记录开始时间
+# 答题开始时间
 if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
+# 答案缓存：记录每一题选择，实现返回记忆
+if "user_answers" not in st.session_state:
+    st.session_state.user_answers = [None] * TOTAL_QUESTION
 
 # ===================== 页面头部 =====================
 st.title("赛博炼金术士 · 元素人格测试仪")
@@ -178,19 +182,26 @@ q_num = st.session_state.current_q
 if q_num <= TOTAL_QUESTION:
     progress = q_num / TOTAL_QUESTION
     st.progress(progress, text=f"答题进度：第{q_num}题 / 共{TOTAL_QUESTION}题")
+
+# ========== 功能1：答题时长【实时显示】 ==========
+if q_num <= TOTAL_QUESTION:
+    current_use_time = round(time.time() - st.session_state.start_time, 1)
+    st.caption(f"⏱️ 当前答题时长：{current_use_time} 秒")
 st.divider()
 
-# ===================== 逐题渲染逻辑 =====================
+# ===================== 逐题渲染逻辑（答案记忆功能） =====================
 # 第1题
 if q_num == 1:
     q = QUESTION_LIST[0]
-    ans = st.radio(q["title"], q["options"], index=None)
+    # 读取缓存答案，实现记忆
+    ans = st.radio(q["title"], q["options"], index=st.session_state.user_answers[0])
     st.info(q["tip"])
 
     if st.button("下一题"):
-        if not ans:
+        if ans is None:
             st.warning("请先选择一个答案再继续！")
         else:
+            st.session_state.user_answers[0] = ans  # 保存当前答案
             calc_radio_score(ans)
             st.session_state.current_q = 2
             st.toast("已完成本题，进入下一题")
@@ -199,7 +210,7 @@ if q_num == 1:
 # 第2题
 elif q_num == 2:
     q = QUESTION_LIST[1]
-    ans = st.radio(q["title"], q["options"], index=None)
+    ans = st.radio(q["title"], q["options"], index=st.session_state.user_answers[1])
     st.info(q["tip"])
 
     col1, col2 = st.columns(2)
@@ -209,9 +220,10 @@ elif q_num == 2:
             st.rerun()
     with col2:
         if st.button("下一题"):
-            if not ans:
+            if ans is None:
                 st.warning("请先选择一个答案再继续！")
             else:
+                st.session_state.user_answers[1] = ans  # 保存当前答案
                 calc_radio_score(ans)
                 st.session_state.current_q = 3
                 st.toast("已完成本题，进入下一题")
@@ -220,7 +232,7 @@ elif q_num == 2:
 # 第3题
 elif q_num == 3:
     q = QUESTION_LIST[2]
-    ans = st.radio(q["title"], q["options"], index=None)
+    ans = st.radio(q["title"], q["options"], index=st.session_state.user_answers[2])
     st.info(q["tip"])
 
     col1, col2 = st.columns(2)
@@ -230,9 +242,10 @@ elif q_num == 3:
             st.rerun()
     with col2:
         if st.button("下一题"):
-            if not ans:
+            if ans is None:
                 st.warning("请先选择一个答案再继续！")
             else:
+                st.session_state.user_answers[2] = ans  # 保存当前答案
                 calc_radio_score(ans)
                 st.session_state.current_q = 4
                 st.toast("已完成本题，进入下一题")
@@ -241,7 +254,7 @@ elif q_num == 3:
 # 第4题
 elif q_num == 4:
     q = QUESTION_LIST[3]
-    ans = st.radio(q["title"], q["options"], index=None)
+    ans = st.radio(q["title"], q["options"], index=st.session_state.user_answers[3])
     st.info(q["tip"])
 
     col1, col2 = st.columns(2)
@@ -251,9 +264,10 @@ elif q_num == 4:
             st.rerun()
     with col2:
         if st.button("下一题"):
-            if not ans:
+            if ans is None:
                 st.warning("请先选择一个答案再继续！")
             else:
+                st.session_state.user_answers[3] = ans  # 保存当前答案
                 calc_radio_score(ans)
                 st.session_state.current_q = 5
                 st.toast("已完成本题，进入下一题")
@@ -262,7 +276,9 @@ elif q_num == 4:
 # 第5题 滑块
 elif q_num == 5:
     q = QUESTION_LIST[4]
-    ans = st.slider(q["title"], 1, 4, 2, help="1=缺乏耐心、行动优先 | 4=极具耐心、沉稳优先")
+    # 滑块默认值记忆
+    default_val = st.session_state.user_answers[4] if st.session_state.user_answers[4] else 2
+    ans = st.slider(q["title"], 1, 4, default_val, help="1=缺乏耐心、行动优先 | 4=极具耐心、沉稳优先")
     st.caption("1：急躁好动 | 2：中等耐心 | 3：比较耐心 | 4：极度沉稳")
     st.info(q["tip"])
 
@@ -273,6 +289,7 @@ elif q_num == 5:
             st.rerun()
     with col2:
         if st.button("下一题"):
+            st.session_state.user_answers[4] = ans  # 保存当前答案
             calc_slider_score(ans)
             st.session_state.current_q = 6
             st.toast("已完成本题，进入下一题")
@@ -281,7 +298,7 @@ elif q_num == 5:
 # 第6题 多选
 elif q_num == 6:
     q = QUESTION_LIST[5]
-    ans = st.multiselect(q["title"], q["options"])
+    ans = st.multiselect(q["title"], q["options"], default=st.session_state.user_answers[5])
     st.info(q["tip"])
 
     col1, col2 = st.columns(2)
@@ -294,20 +311,21 @@ elif q_num == 6:
             if not ans:
                 st.warning("请至少选择一项特质再继续！")
             else:
+                st.session_state.user_answers[5] = ans  # 保存当前答案
                 calc_multiselect_score(ans)
                 st.session_state.current_q = 7
                 st.toast("所有题目作答完毕，正在生成结果")
                 st.rerun()
 
-# ===================== 结果页面（计时+彩蛋+动效+背景音乐） =====================
+# ===================== 结果页面 =====================
 elif q_num == 7:
-    # 1. 计算答题用时
+    # 总答题用时
     end_time = time.time()
     use_time = round(end_time - st.session_state.start_time, 1)
     st.info(f"⏱️ 本次答题总用时：{use_time} 秒")
     st.divider()
 
-    # 2. 分数展示 + 柱状图
+    # 分数展示 + 柱状图
     st.subheader("你的元素得分明细")
     st.write(f"火元素得分：{st.session_state.score_fire} 分")
     st.write(f"水元素得分：{st.session_state.score_water} 分")
@@ -328,7 +346,7 @@ elif q_num == 7:
     st.bar_chart(df, x="元素", y="分数", use_container_width=True)
     st.divider()
 
-    # 3. 平局判断
+    # 平局判断
     all_score = {
         "火": st.session_state.score_fire,
         "水": st.session_state.score_water,
@@ -344,16 +362,14 @@ elif q_num == 7:
     else:
         final_choice = max(all_score, key=all_score.get)
 
-    # 4. 获取元素信息 + 随机抽取专属彩蛋文案
+    # 获取元素信息与随机彩蛋
     res_name = ELEMENT_INFO[final_choice]["name"]
     res_desc = ELEMENT_INFO[final_choice]["desc"]
     res_color = ELEMENT_INFO[final_choice]["color"]
     egg_list = ELEMENT_INFO[final_choice]["egg"]
-    # 随机选一条彩蛋，每次结果文案不一样
-    import random
     egg_text = random.choice(egg_list)
 
-    # 5. 结果卡片 + CSS简单动效（渐入动画）
+    # 结果卡片+渐入动画
     st.markdown(f"""
     <style>
     @keyframes fadeIn {{
@@ -370,28 +386,31 @@ elif q_num == 7:
     </style>
     <div class="result-card">
         <h2 style="color: {res_color};">{res_name}</h2>
-        <p style="font-size: 1.1rem;">{name}，你的本命元素为【{final_choice}】</p>
-        <p style="font-style: italic; color: #555; font-size: 1rem;">{res_desc}</p>
+        <p style="font-size: 1.1rem;">{name}，你的本命元素为【{final_choice}】</p >
+        <p style="font-style: italic; color: #555; font-size: 1rem;">{res_desc}</p >
     </div>
     """, unsafe_allow_html=True)
 
-    # 6. 展示元素专属彩蛋文案
     st.success(f"✨ 专属寄语：{egg_text}")
     st.toast("匹配完成！炼金身份已激活")
     st.divider()
 
 
-    # 7. 分享文案
+    # 分享文案
     share_text = f"我完成了元素人格测试！代号：{name}，本命元素：{final_choice}，身份：{res_name}，答题用时：{use_time}秒"
     st.text_area("一键复制分享", value=share_text, height=80)
     st.divider()
 
-    # 8. 重新测试（重置计时+分数+题号）
-    if st.button("重新测试"):
+    # ========== 功能3：重置【确认弹窗】 ==========
+    st.subheader("重新测试")
+    confirm = st.checkbox("确认清空所有记录，重新开始测试？")
+    if st.button("点击重置") and confirm:
+        # 重置所有状态
         st.session_state.current_q = 1
         st.session_state.score_fire = 0
         st.session_state.score_water = 0
         st.session_state.score_wind = 0
         st.session_state.score_earth = 0
-        st.session_state.start_time = time.time()  # 重置计时
+        st.session_state.start_time = time.time()
+        st.session_state.user_answers = [None] * TOTAL_QUESTION
         st.rerun()
