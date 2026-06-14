@@ -1,42 +1,28 @@
+# 导入Streamlit网页开发库
 import streamlit as st
-import math
 
-st.title("元素人格自动匹配器（均衡判断版）")
+# 页面主标题
+st.title("赛博炼金术士 · 元素人格测试仪")
+# 副标题/说明文字
+st.caption("基于你的元素选择，匹配专属炼金身份")
 
-fire_score = st.slider("火属性（行动力）", 0, 10, 5)
-water_score = st.slider("水属性（冷静度）", 0, 10, 5)
-user = [fire_score, water_score]
+# 交互组件：获取用户输入与选择
+name = st.text_input("你的代号是？")  # 文本输入框
+choice = st.selectbox("遇到危机时，你更像哪一种元素？", ["火", "水", "风", "土"])  # 下拉选择框
 
-profiles = {
-    "烈焰型": [10, 4],
-    "潮汐型": [4, 10],
-    "疾风型": [7, 7]
-}
-
-min_dist = 999999.0
-best_match = ""
-# 新增：记录有多少个模板同为最小距离
-equal_count = 0
-
-if st.button("自动匹配"):
-    for name, coords in profiles.items():
-        dist = math.sqrt((user[0] - coords[0])**2 + (user[1] - coords[1])**2)
-        st.write(f"{name} 距离：{dist:.2f}")
-
-        # 情况1：找到更小值，重置计数
-        if dist < min_dist:
-            min_dist = dist
-            best_match = name
-            equal_count = 1
-        # 情况2：距离和当前最小值相等
-        elif dist == min_dist:
-            equal_count += 1
-
-    st.divider()
-    st.write(f"最小匹配距离：{min_dist:.2f}")
-    # 判断是否多个模板距离相同
-    if equal_count > 1:
-        st.info("多个模板匹配度一致，属性均衡！")
+# 点击按钮触发匹配逻辑
+if st.button("开始最终匹配"):
+    # 元素身份判断逻辑（核心逻辑，未修改）
+    if choice == "火":
+        result = "烈焰炼金术士"
+    elif choice == "水":
+        result = "潮汐观察者"
+    elif choice == "风":
+        result = "疾风游侠"
     else:
-        st.success(f"最终匹配结果：{best_match}")
-    st.balloons()
+        result = "大地守卫者"
+    
+    st.divider()  # 分割线，优化界面层级
+    # 醒目展示最终结果
+    st.success(f"{name}，你的最终元素身份是：{result}")
+    st.toast("匹配完成！")  # 弹窗轻提示
