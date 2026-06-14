@@ -1,20 +1,37 @@
 import streamlit as st
 
-# 数据层：统一管理所有内容（不写死在组件里）
-profiles = {
-    "火": {"title":"烈焰炼金术士", "desc":"行动迅速，爆发力强"},
-    "水": {"title":"潮汐观察者", "desc":"心思细腻，适应力好"},
-    "风": {"title":"疾风游侠", "desc":"思维活跃，行事灵活"},
-    "土": {"title":"大地守卫者", "desc":"沉稳可靠，抗压能力强"}
-}
+st.title("元素人格测试仪")
+name = st.text_input("输入你的代号：")
 
-# 页面交互层
-st.title("元素人格探测器")
-name = st.text_input("请输入你的代号：")
-# 提取字典的键作为下拉选项
-element = st.selectbox("选择你的元素", list(profiles.keys()))
+# 初始化分数
+fire_score = 0
+water_score = 0
 
-# 点击按钮展示查询结果
-if st.button("开始匹配"):
-    st.success(f"{name}，你的专属身份：{profiles[element]['title']}")
-    st.write("性格描述：", profiles[element]["desc"])
+# 第一题
+q1 = st.radio("1. 面对未知洞穴，你会？", ["直接进去看看", "先观察四周"])
+# 第二题
+q2 = st.selectbox("2. 行动偏好？", ["快速突进", "稳妥试探"])
+
+if st.button("开始分析"):
+    # 逐题加分
+    if q1 == "直接进去看看":
+        fire_score += 10
+    else:
+        water_score += 10
+
+    if q2 == "快速突进":
+        fire_score += 10
+    else:
+        water_score += 10
+
+    # 判断最终结果
+    if fire_score > water_score:
+        res = "烈焰型"
+    elif water_score > fire_score:
+        res = "潮汐型"
+    else:
+        res = "平衡型"
+
+    # 展示结果
+    st.write(f"分数统计 → 火：{fire_score}  水：{water_score}")
+    st.success(f"{name}，你的测试结果：{res}")
